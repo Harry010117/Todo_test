@@ -1,77 +1,166 @@
 <template>
-  <v-layout row wrap justify-center id="wrapper">
-    <v-flex xs12 md4 offset-md1 class="text-xs-center centered">
-      <img id="logo" class="logo" src="~@/assets/logo.png" alt="electron-vue">
+  <v-layout>
+    <v-flex xs12>
+      <v-list two-line>
+        <template v-for="(td, i) in todos">
+          <v-list-tile
+              :key="td.title"
+              avatar
+              @click=""
+          >
+            <v-list-tile-avatar>
+              <v-icon :color="td.done ? 'success' : 'secondary'">{{td.done ? 'check' : 'hourglass_empty'}}</v-icon>
+            </v-list-tile-avatar>
+
+            <v-list-tile-content>
+              <v-list-tile-title v-html="td.title"></v-list-tile-title>
+              <v-list-tile-sub-title v-html="td.content"></v-list-tile-sub-title>
+            </v-list-tile-content>
+            <v-list-tile-action>
+              <v-btn icon ripple>
+                <v-icon color="grey lighten-1">info</v-icon>
+              </v-btn>
+            </v-list-tile-action>
+          </v-list-tile>
+
+        </template>
+      </v-list>
     </v-flex>
-    <v-flex xs12 md6 class="text-xs-center centered">
-      <img id="logo" class="logo" src="/static/v.png" alt="Vuetifyjs">
-    </v-flex>
-    <v-flex xs10 class="mt-3">
+
+    <v-dialog
+        v-model="dialog"
+        width="500"
+    >
+      <v-btn
+          color="primary"
+          dark
+          fab
+          fixed
+          bottom
+          right
+          slot="activator"
+      >
+        <v-icon>edit</v-icon>
+      </v-btn>
       <v-card>
+        <v-card-title>
+          <span class="headline">할일 작성</span>
+        </v-card-title>
         <v-card-text>
-          <p>Welcome to the Electron-vue + Vuetify template.</p>
-          <p>Vuetify is a progressive Material Design component framework for Vue.js. It was designed to empower developers to create amazing applications. For more information on Vuetify, check out the <a href="https://vuetifyjs.com" target="_blank">documentation</a>. If you have questions, please join the official <a href="https://chat.vuetifyjs.com/" target="_blank" title="chat">discord</a>. Find a bug? Report it on the github <a href="https://github.com/vuetifyjs/vuetify/issues" target="_blank" title="contribute">issue board</a>.</p>
-          <p>Thank you for developing with Vuetify and I look forward to bringing more exciting features in the future.</p>
-          <div class="text-xs-right">
-            <em><small>&mdash; John Leider</small></em>
-          </div>
+          <v-form ref="form" v-model="valid" lazy-validation>
+            <v-container grid-list-md>
+              <v-layout wrap>
+                <v-flex xs12>
+                  <v-text-field label="제목" required counter="40" prepend-icon="title"></v-text-field>
+                </v-flex>
+                <v-flex xs12>
+                  <v-text-field label="내용" hint="굳이 넣고 싶다면.." counter="40" prepend-icon="note"></v-text-field>
+                </v-flex>
+                <v-flex xs12 sm6>
+                  <v-menu
+                      ref="menuDate"
+                      :close-on-content-click="false"
+                      v-model="menuDate"
+                      :nudge-right="40"
+                      :return-value.sync="date"
+                      lazy
+                      transition="scale-transition"
+                      offset-y
+                      full-width
+                      min-width="290px"
+                  >
+                    <v-text-field
+                        slot="activator"
+                        v-model="date"
+                        label="목표 날짜"
+                        prepend-icon="event"
+                        readonly
+                    ></v-text-field>
+                    <v-date-picker v-model="date" @input="$refs.menuDate.save(date)"></v-date-picker>
+
+                  </v-menu>
+                </v-flex>
+                <v-flex xs12 sm6>
+                  <v-menu
+                      ref="menuTime"
+                      :close-on-content-click="false"
+                      v-model="menuTime"
+                      :nudge-right="40"
+                      :return-value.sync="time"
+                      lazy
+                      transition="scale-transition"
+                      offset-y
+                      full-width
+                      max-width="290px"
+                      min-width="290px"
+                  >
+                    <v-text-field
+                        slot="activator"
+                        v-model="time"
+                        label="목표 시간"
+                        prepend-icon="access_time"
+                        readonly
+                    ></v-text-field>
+                    <v-time-picker
+                        v-if="menuTime"
+                        v-model="time"
+                        @change="$refs.menuTime.save(time)"
+                    ></v-time-picker>
+                  </v-menu>
+                </v-flex>
+
+                <v-flex xs12 sm6>
+                  <v-select
+                      :items="['집', '직장', '밖']"
+                      label="종류"
+                      required
+                  ></v-select>
+                </v-flex>
+
+              </v-layout>
+            </v-container>
+          </v-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn primary flat router to="/inspire">Continue</v-btn>
+          <v-btn color="blue darken-1" flat @click.native="dialog = false">Close</v-btn>
+          <v-btn color="blue darken-1" flat @click.native="save()">Save</v-btn>
         </v-card-actions>
       </v-card>
-    </v-flex>
-    <v-flex xs10 class="mt-4">
-      <system-information></system-information>
-    </v-flex>
-    <v-flex xs10 class="mt-4">
-      <v-card>
-        <v-card-title class="headline">Docs</v-card-title>
-        <v-divider></v-divider>
-        <v-card-actions class="pt-3 pb-3">
-          <v-spacer></v-spacer>
-          <v-btn class="link-btn" @click="open('https://vuejs.org/v2/guide/')">Vue</v-btn>
-          <v-spacer></v-spacer>
-          <v-btn class="link-btn" @click="open('https://electron.atom.io/docs/')">Electron</v-btn>
-          <v-spacer></v-spacer>
-          <v-btn class="link-btn" @click="open('https://vuetifyjs.com')">Vuetify</v-btn>
-          <v-spacer></v-spacer>
-        </v-card-actions>
-      </v-card>
-    </v-flex>
+    </v-dialog>
   </v-layout>
 </template>
 
 <script>
-  import SystemInformation from './WelcomeView/SystemInformation'
-
   export default {
     name: 'welcome',
-    components: { SystemInformation },
+    data () {
+      return {
+        todos: [
+          {
+            rt: new Date(),
+            t: new Date(),
+            type: 0,
+            title: '빨래 널기',
+            content: '그만하고 싶다...',
+            done: false
+          }
+        ],
+        menuDate: false,
+        menuTime: false,
+        date: null,
+        time: null,
+        valid: false,
+        dialog: false
+      }
+    },
     methods: {
-      open (link) {
-        this.$electron.shell.openExternal(link)
+      save () {
+        this.dialog = false
       }
     }
   }
 </script>
 
 <style scoped>
-  .centered
-  {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .logo
-  {
-    max-width: 100%;
-  }
-
-  .link-btn
-  {
-    width: 150px;
-  }
 </style>
